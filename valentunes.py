@@ -54,24 +54,23 @@ class Valentunes:
         self._songs = _songs
         if len(self._songs) > 5:
             self._songs = self._songs[:5]
-
-        ##########
-        ## Message
-        ##########
-        message = "Hello %s, this is %s. Here are some song for you, happy Valentine's day !" %(_to, _from)
-        if '_msg' in kwargs['options'].keys():
-            self._message = "%s %s" %(message, kwargs['options']['_msg'])
-        else:
-            self._message = message
+        
+        ################
+        ## Intro message
+        ################
+        self._message = "Hello %s, this is %s." %(_to, _from)
+        if 'message' in kwargs.keys():
+            self._message += kwargs['message']
 
         #################
-        ## Optional voice
+        ## Voice
         #################
-        if '_voice' in kwargs['options'].keys():
-            if kwargs['options']['_voice'] == 'woman':
+        self._voice = twilio.Say.MAN
+        self._args = kwargs
+
+        if 'voice' in kwargs.keys():
+            if kwargs['voice'] == 'woman':
                 self._voice = twilio.Say.WOMAN
-        else:
-            self._voice = twilio.Say.MAN
                 
     def call(self):
         
@@ -83,7 +82,7 @@ class Valentunes:
         ## XML header
         head = "<?xml version='1.0' encoding='utf-8' ?>\n"
 
-        #########################        
+        #########################
         ## Generate intro message
         #########################
         r = twilio.Response()
@@ -107,7 +106,7 @@ class Valentunes:
         i = 1
         listing = ''
         for s in self._songs:
-            listing += "Number %s: %s..." %(i, s[0])
+            listing += "Number %s: %s..." %(i, s['title'])
             i += 1
         ## Let user type in the song number (5 secs. delay)
         r.addGather(
@@ -116,7 +115,7 @@ class Valentunes:
             timeout = 5
         ).append(
             twilio.Say(
-                "%s Type their number followed by the hash key to listen them, 9 to listen to this list, or 0 for the introduction." %listing,
+                "%s Type their number and the hash key to listen to them. Type 9 to listen to this list and 0 for the introduction message." %listing,
                 voice = self._voice,
             )
         )
@@ -140,7 +139,7 @@ class Valentunes:
                 method = 'GET',
                 timeout = 10
             ).append(
-                twilio.Play(s[1])
+                twilio.Play(s['url'])
             )
             ## Automated redirect to the next one, or to the first one
             root = "%s/data/%s" %(path, uid)
